@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Scheduler - Outlook Integration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .meeting-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .meeting-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .meeting-item h3 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .meeting-details {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .meeting-details div {
+            margin-bottom: 5px;
+        }
+
+        .meeting-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .meeting-link {
+            display: inline-block;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 5px;
+            word-break: break-all;
+        }
+
+        .meeting-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📅 Meeting Scheduler</h1>
+            <p>Schedule and manage Outlook meetings with automatic calendar sync</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Schedule Meeting Form -->
+            <div class="card">
+                <h2>
+                    <span>📝</span>
+                    Schedule New Meeting
+                </h2>
+                
+                <div id="alert-container"></div>
+
+                <form id="meetingForm">
+                    <div class="form-group">
+                        <label for="subject">Meeting Subject *</label>
+                        <input type="text" id="subject" required placeholder="e.g., Project Kickoff">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="attendeeEmail">Attendee Email *</label>
+                        <input type="email" id="attendeeEmail" required placeholder="attendee@example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="startTime">Start Date & Time *</label>
+                        <input type="datetime-local" id="startTime" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="duration">Duration (minutes)</label>
+                        <input type="number" id="duration" value="30" min="15" step="15">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">Meeting Description</label>
+                        <textarea id="description" placeholder="Add agenda items, meeting notes, or any additional information..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        Schedule Meeting
+                    </button>
+                </form>
+            </div>
+
+            <!-- Scheduled Meetings List -->
+            <div class="card">
+                <h2>
+                    <span>📋</span>
+                    Scheduled Meetings
+                </h2>
+                
+                <div id="meetings-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading meetings...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API base URL - works for both local dev and production
+        const API_BASE_URL = window.location.origin;
+
+        // Set minimum datetime to now
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('startTime').min = now.toISOString().slice(0, 16);
+
+        // Show alert message
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.getElementById('alert-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Load meetings
+        async function loadMeetings() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/list-meetings`);
+                const data = await response.json();
+                
+                const container = document.getElementById('meetings-container');
+                
+                if (!data.meetings || data.meetings.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p>No meetings scheduled yet</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = '<div class="meeting-list">' + 
+                    data.meetings.map(meeting => `
+                        <div class="meeting-item" data-meeting-id="${meeting.meeting_id}">
+                            <h3>${meeting.subject}</h3>
+                            <div class="meeting-details">
+                                <div><strong>Attendee:</strong> ${meeting.attendee_email}</div>
+                                <div><strong>Start:</strong> ${formatDate(meeting.start_time)}</div>
+                                <div><strong>End:</strong> ${formatDate(meeting.end_time)}</div>
+                                ${meeting.onlineMeetingUrl ? `<div><strong>Teams:</strong> <a href="${meeting.onlineMeetingUrl}" target="_blank" class="meeting-link">Join Meeting</a></div>` : ''}
+                            </div>
+                            <div class="meeting-actions">
+                                <button class="btn btn-danger" onclick="cancelMeeting('${meeting.meeting_id}')">
+                                    Cancel Meeting
+                                </button>
+                            </div>
+                        </div>
+                    `).join('') + 
+                '</div>';
+            } catch (error) {
+                console.error('Error loading meetings:', error);
+                document.getElementById('meetings-container').innerHTML = `
+                    <div class="alert alert-error">
+                        Failed to load meetings. Please refresh the page.
+                    </div>
+                `;
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('meetingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Scheduling...';
+            
+            const startTime = new Date(document.getElementById('startTime').value);
+            const duration = parseInt(document.getElementById('duration').value);
+            const endTime = new Date(startTime.getTime() + duration * 60000);
+            
+            const meetingData = {
+                subject: document.getElementById('subject').value,
+                attendeeEmail: document.getElementById('attendeeEmail').value,
+                startTime: startTime.toISOString(),
+                endTime: endTime.toISOString(),
+                description: document.getElementById('description').value
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/create-meeting`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(meetingData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Meeting scheduled successfully! Invitation sent to attendee.', 'success');
+                    document.getElementById('meetingForm').reset();
+                    loadMeetings();
+                } else {
+                    showAlert(`Error: ${data.details || data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Failed to schedule meeting. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Schedule Meeting';
+            }
+        });
+
+        // Cancel meeting
+        async function cancelMeeting(meetingId) {
+            if (!confirm('Are you sure you want to cancel this meeting? This will notify all attendees.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/cancel-meeting?meetingId=${encodeURIComponent(meetingId)}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('Meeting cancelled successfully!', 'success');
+                    loadMeetings();
+                } else {
+                    showAlert(`Error: ${data.details || data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Failed to cancel meeting. Please try again.', 'error');
+            }
+        }
+
+        // Make cancelMeeting available globally
+        window.cancelMeeting = cancelMeeting;
+
+        // Load meetings on page load
+        loadMeetings();
+        
+        // Refresh meetings every 30 seconds
+        setInterval(loadMeetings, 30000);
+    </script>
+</body>
+</html>

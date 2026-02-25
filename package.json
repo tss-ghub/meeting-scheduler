@@ -1,0 +1,24 @@
+{
+  "name": "outlook-meeting-scheduler-vercel",
+  "version": "1.0.0",
+  "description": "Outlook meeting scheduler for Vercel serverless deployment",
+  "main": "api/index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "keywords": ["outlook", "microsoft-graph", "meeting-scheduler", "vercel"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@azure/msal-node": "^2.6.0",
+    "@vercel/node": "^3.0.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
