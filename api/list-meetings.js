@@ -26,8 +26,8 @@ module.exports = async (req, res) => {
       id: event.id,
       meeting_id: event.id,
       subject: event.subject,
-      start_time: event.start.dateTime,
-      end_time: event.end.dateTime,
+      start_time: new Date(event.start.dateTime + 'Z').toLocaleString(),
+      end_time: new Date(event.end.dateTime + 'Z').toLocaleString(),
       attendee_email: event.attendees && event.attendees.length > 0 
         ? event.attendees[0].emailAddress.address 
         : 'No attendees',
